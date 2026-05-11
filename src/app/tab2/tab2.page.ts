@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/standalone';
-import { ExploreContainerComponent } from '../explore-container/explore-container.component';
 import { IonSearchbar, IonSegment, IonSegmentButton, IonLabel, IonList, IonItem, IonFab, IonFabButton, IonIcon, IonCheckbox, IonBadge} from '@ionic/angular/standalone';
 import { TaskService, Task } from '../services/task.service';
 import { Router } from '@angular/router';
@@ -10,6 +9,8 @@ import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { AddTaskModalComponent } from '../components/add-task-modal/add-task-modal.component';
 import { addIcons } from 'ionicons';
 import { add } from 'ionicons/icons';
+import { IonButton } from '@ionic/angular/standalone';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-tab2',
@@ -17,7 +18,7 @@ import { add } from 'ionicons/icons';
   styleUrls: ['tab2.page.scss'],
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, 
     IonSegment, IonSegmentButton, IonLabel, IonList, IonItem, IonCheckbox, IonIcon, IonBadge, 
-    IonFab, IonFabButton, FormsModule, CommonModule]
+    IonFab, IonFabButton, FormsModule, CommonModule, IonButton]
 })
 
 
@@ -29,7 +30,8 @@ export class Tab2Page {
 
   constructor(private taskService: TaskService, private router: Router,   
     private modalCtrl: ModalController,
-    private toastCtrl: ToastController) {
+    private toastCtrl: ToastController,
+    private alertCtrl: AlertController) {
       addIcons({
         add
       });
@@ -72,6 +74,30 @@ export class Tab2Page {
       });
       await toast.present();
     }
+  }
+
+
+  async confirmClearAll() {
+
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmar',
+      message: '¿Seguro que quieres eliminar todas las tareas?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.taskService.clearAll();
+          }
+        }
+      ]
+    });
+  
+    await alert.present();
   }
 
 }

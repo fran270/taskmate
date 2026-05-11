@@ -1,14 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ModalController } from '@ionic/angular/standalone';
 import {
   IonButton,
-  IonButtons,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonIcon,
-  IonContent,
   IonItem,
   IonLabel,
   IonInput,
@@ -17,55 +11,51 @@ import {
   IonSelectOption,
   IonNote,
 } from '@ionic/angular/standalone';
-
-import { add } from 'ionicons/icons';
-import { addIcons } from 'ionicons';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-add-task-modal',
   templateUrl: './add-task-modal.component.html',
   styleUrls: ['./add-task-modal.component.scss'],
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonButton,
-    IonButtons,
-    IonIcon,
-    IonContent,
     IonItem,
     IonLabel,
     IonInput,
     IonTextarea,
     IonSelect,
     IonSelectOption,
-    FormsModule,
+    ReactiveFormsModule,
     IonNote,
   ],
 })
-export class AddTaskModalComponent {
-  title = '';
-  description = '';
-  priority = 'media';
-  error = '';
+export class AddTaskModalComponent implements OnInit {
+  taskForm!: FormGroup;
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(private fb: FormBuilder, private modalCtrl: ModalController) {}
 
-  ngOnInit(): void {
-    throw new Error('Method not implemented.');
+  ngOnInit() {
+    this.taskForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      description: ['', Validators.maxLength(500)],
+      priority: ['media', Validators.required],
+      category: ['personal'],
+    });
   }
 
-  dismiss() {
-    this.modalCtrl.dismiss();
+  get titleError(): string {
+    const ctrl = this.taskForm.get('title');
+    if (ctrl?.hasError('required')) return 'El título es obligatorio';
+    if (ctrl?.hasError('minlength')) return 'Mínimo 3 caracteres';
+    if (ctrl?.hasError('maxlength')) return 'Máximo 100 caracteres';
+    return '';
   }
 
   save() {
-    if (!this.title.trim()) return;
-    this.modalCtrl.dismiss({
-      title: this.title,
-      description: this.description,
-      priority: this.priority,
-    });
-  
+    if (this.taskForm.invalid) {
+      this.taskForm.markAllAsTouched();
+      return;
+    }
+    this.modalCtrl.dismiss(this.taskForm.value);
   }
 }
