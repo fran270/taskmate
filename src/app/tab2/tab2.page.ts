@@ -1,6 +1,23 @@
 import { Component } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/standalone';
-import { IonSearchbar, IonSegment, IonSegmentButton, IonLabel, IonList, IonItem, IonFab, IonFabButton, IonIcon, IonCheckbox, IonBadge} from '@ionic/angular/standalone';
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+} from '@ionic/angular/standalone';
+import {
+  IonSearchbar,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
+  IonList,
+  IonItem,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonCheckbox,
+  IonBadge,
+} from '@ionic/angular/standalone';
 import { TaskService, Task } from '../services/task.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,58 +28,110 @@ import { addIcons } from 'ionicons';
 import { add } from 'ionicons/icons';
 import { IonButton } from '@ionic/angular/standalone';
 import { AlertController } from '@ionic/angular';
+import { Service } from '../services/service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-tab2',
   templateUrl: 'tab2.page.html',
   styleUrls: ['tab2.page.scss'],
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, 
-    IonSegment, IonSegmentButton, IonLabel, IonList, IonItem, IonCheckbox, IonIcon, IonBadge, 
-    IonFab, IonFabButton, FormsModule, CommonModule, IonButton]
+  imports: [
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonSearchbar,
+    IonSegment,
+    IonSegmentButton,
+    IonLabel,
+    IonList,
+    IonItem,
+    IonCheckbox,
+    IonIcon,
+    IonBadge,
+    IonFab,
+    IonFabButton,
+    FormsModule,
+    CommonModule,
+    IonButton,
+  ],
 })
-
-
 export class Tab2Page {
-
   tasks: Task[] = [];
   filteredTasks: Task[] = [];
   selectedFilter = 'all';
 
-  constructor(private taskService: TaskService, private router: Router,   
+  constructor(
+    private taskService: TaskService,
+    private router: Router,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
-    private alertCtrl: AlertController) {
-      addIcons({
-        add
-      });
-    }
+    private alertCtrl: AlertController,
+    private service: Service
+  ) {
+    addIcons({
+      add,
+    });
+
+    this.obtenerTareas();
+  }
 
   ionViewWillEnter() {
     this.tasks = this.taskService.getTasks();
     this.applyFilter();
   }
 
+  obtenerTareas() {
+     this.taskService.getTareas().subscribe({
+      next: (respuesta: any) => {
+        this.filteredTasks = respuesta.rows;
+      },
+      error: (error) => {
+        console.log(error);
+      },
+    });
+  }
+
+  guardarTarea(task: Task) {
+    this.service.createTask(task).subscribe({
+      next:(respuesta) => {
+        console.log(respuesta);
+      }, 
+      error: (error) => console.log(error)
+    });
+  }
+
   filterTasks(event: any) {
     const query = event.target.value?.toLowerCase() || '';
-    this.filteredTasks = this.tasks.filter(t => t.title.toLowerCase().includes(query));
+    this.filteredTasks = this.tasks.filter((t) =>
+      t.title.toLowerCase().includes(query),
+    );
   }
 
   applyFilter() {
-    if (this.selectedFilter === 'pending') this.filteredTasks = this.tasks.filter(t => !t.completed);
-    else if (this.selectedFilter === 'done') this.filteredTasks = this.tasks.filter(t => t.completed);
+    if (this.selectedFilter === 'pending')
+      this.filteredTasks = this.tasks.filter((t) => !t.completed);
+    else if (this.selectedFilter === 'done')
+      this.filteredTasks = this.tasks.filter((t) => t.completed);
     else this.filteredTasks = [...this.tasks];
   }
 
-  onToggle(task: Task) { this.taskService.toggleComplete(task.id); }
+  onToggle(task: Task) {
+    this.taskService.toggleComplete(task.id);
+  }
 
-  goToDetail(id: number) { this.router.navigate(['/task-detail', id]); }
+  goToDetail(id: number) {
+    this.router.navigate(['/task-detail', id]);
+  }
 
-  async openAddModal() { 
-    const modal = await this.modalCtrl.create({ component: AddTaskModalComponent });
+  async openAddModal() {
+    const modal = await this.modalCtrl.create({
+      component: AddTaskModalComponent,
+    });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data) {
-      this.taskService.addTask({ ...data, completed: false });
+      this.service.createTask(data);
       this.tasks = this.taskService.getTasks();
       this.applyFilter();
       // Mostrar Toast de confirmación
@@ -70,34 +139,31 @@ export class Tab2Page {
         message: '✅ Tarea creada correctamente',
         duration: 2000,
         position: 'bottom',
-        color: 'success'
+        color: 'success',
       });
       await toast.present();
     }
   }
 
-
   async confirmClearAll() {
-
     const alert = await this.alertCtrl.create({
       header: 'Confirmar',
       message: '¿Seguro que quieres eliminar todas las tareas?',
       buttons: [
         {
           text: 'Cancelar',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Eliminar',
           role: 'destructive',
           handler: () => {
             this.taskService.clearAll();
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
-  
+
     await alert.present();
   }
-
 }
